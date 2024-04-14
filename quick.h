@@ -4143,7 +4143,6 @@ static void app_full_screen(bool on) {
     static int32_t style;
     static WINDOWPLACEMENT wp;
     if (on != app.is_full_screen) {
-        app_show_task_bar(!on);
         if (on) {
             style = GetWindowLongA(window(), GWL_STYLE);
             app_set_window_long(GWL_STYLE, (style | WS_POPUP | WS_VISIBLE) &
