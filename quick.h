@@ -4146,6 +4146,8 @@ static void app_full_screen(bool on) {
         app_show_task_bar(!on);
         if (on) {
             style = GetWindowLongA(window(), GWL_STYLE);
+            app_set_window_long(GWL_STYLE, (style | WS_POPUP | WS_VISIBLE) &
+                ~(WS_OVERLAPPEDWINDOW));
             wp.length = sizeof(wp);
             fatal_if_false(GetWindowPlacement(window(), &wp));
             WINDOWPLACEMENT nwp = wp;
@@ -4153,8 +4155,6 @@ static void app_full_screen(bool on) {
             nwp.rcNormalPosition = (RECT){app.mrc.x, app.mrc.y,
                 app.mrc.x + app.mrc.w, app.mrc.y + app.mrc.h};
             fatal_if_false(SetWindowPlacement(window(), &nwp));
-            app_set_window_long(GWL_STYLE, (style | WS_VISIBLE) &
-                ~(WS_OVERLAPPEDWINDOW));
         } else {
             fatal_if_false(SetWindowPlacement(window(), &wp));
             app_set_window_long(GWL_STYLE,  style | WS_OVERLAPPED);
