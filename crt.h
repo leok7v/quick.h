@@ -1101,14 +1101,16 @@ static bool is_handle_valid(void* h) {
 
 static bool threads_try_join(thread_t t, double timeout) {
     not_null(t);
-    fatal_if_false(is_handle_valid(t));
-    int32_t timeout_ms = timeout <= 0 ? 0 : (int)(timeout * 1000.0 + 0.5);
-    int r = WaitForSingleObject(t, timeout_ms);
-    if (r != 0) {
-        traceln("failed to join thread %p %s", t, crt.error(r));
-    } else {
-        r = CloseHandle(t) ? 0 : GetLastError();
-        if (r != 0) { traceln("CloseHandle(%p) failed %s", t, crt.error(r)); }
+    int r = 0;
+    if (is_handle_valid(t)) {
+        int32_t timeout_ms = timeout <= 0 ? 0 : (int)(timeout * 1000.0 + 0.5);
+        r = WaitForSingleObject(t, timeout_ms);
+        if (r != 0) {
+            traceln("failed to join thread %p %s", t, crt.error(r));
+        } else {
+            r = CloseHandle(t) ? 0 : GetLastError();
+            if (r != 0) { traceln("CloseHandle(%p) failed %s", t, crt.error(r)); }
+        }
     }
     return r == 0;
 }
