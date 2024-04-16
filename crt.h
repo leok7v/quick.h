@@ -311,7 +311,7 @@ typedef struct {
 
 extern crt_if crt;
 
-typedef void* thread_t;
+typedef struct thread_s* thread_t;
 
 typedef struct {
     thread_t (*start)(void (*func)(void*), void* p); // never returns null
@@ -324,7 +324,7 @@ typedef struct {
 
 extern threads_if threads;
 
-typedef void* event_t;
+typedef struct event_s* event_t;
 
 typedef struct {
     event_t (*create)(void); // never returns null
