@@ -93,11 +93,11 @@ typedef struct gdi_s {
     void (*pixel)(int32_t x, int32_t y, color_t c);
     ui_point_t (*move_to)(int32_t x, int32_t y); // returns previous (x, y)
     void (*line)(int32_t x, int32_t y); // line to x, y with gdi.pen moves x, y
-    void (*frame)(int32_t x, int32_t y, int32_t w, int32_t h); // gdi.pen only 
-    void (*rect)(int32_t x, int32_t y, int32_t w, int32_t h);  // gdi.pen & brush 
+    void (*frame)(int32_t x, int32_t y, int32_t w, int32_t h); // gdi.pen only
+    void (*rect)(int32_t x, int32_t y, int32_t w, int32_t h);  // gdi.pen & brush
     void (*fill)(int32_t x, int32_t y, int32_t w, int32_t h);  // gdi.brush only
-    void (*frame_with)(int32_t x, int32_t y, int32_t w, int32_t h, color_t c); 
-    void (*rect_with)(int32_t x, int32_t y, int32_t w, int32_t h, 
+    void (*frame_with)(int32_t x, int32_t y, int32_t w, int32_t h, color_t c);
+    void (*rect_with)(int32_t x, int32_t y, int32_t w, int32_t h,
                       color_t border, color_t fill);
     void (*fill_with)(int32_t x, int32_t y, int32_t w, int32_t h, color_t c);
     void (*poly)(ui_point_t* points, int32_t count);
@@ -904,7 +904,7 @@ static void gdi_fill(int32_t x, int32_t y, int32_t w, int32_t h) {
     fatal_if_false(FillRect(canvas(), &rc, (HBRUSH)b));
 }
 
-static void gdi_frame_with(int32_t x, int32_t y, int32_t w, int32_t h, 
+static void gdi_frame_with(int32_t x, int32_t y, int32_t w, int32_t h,
         color_t c) {
     brush_t b = gdi.set_brush(gdi.brush_hollow);
     pen_t p = gdi.set_colored_pen(c);
@@ -913,7 +913,7 @@ static void gdi_frame_with(int32_t x, int32_t y, int32_t w, int32_t h,
     gdi.set_brush(b);
 }
 
-static void gdi_rect_with(int32_t x, int32_t y, int32_t w, int32_t h, 
+static void gdi_rect_with(int32_t x, int32_t y, int32_t w, int32_t h,
         color_t border, color_t fill) {
     brush_t b = gdi.set_brush(gdi.brush_color);
     color_t c = gdi.set_brush_color(fill);
@@ -1729,7 +1729,7 @@ static bool app_is_active(void) {
 }
 
 static bool app_has_focus(void) {
-    return GetFocus() == window(); 
+    return GetFocus() == window();
 }
 
 static void window_request_focus(void* w) {
@@ -4043,8 +4043,8 @@ static LRESULT CALLBACK window_proc(HWND window, UINT msg, WPARAM wp, LPARAM lp)
             #endif
             break;
         }
-        case WM_WINDOWPOSCHANGED: 
-            app_window_position_changed((WINDOWPOS*)lp); 
+        case WM_WINDOWPOSCHANGED:
+            app_window_position_changed((WINDOWPOS*)lp);
             break;
         default:
             break;
@@ -4158,7 +4158,7 @@ static void app_full_screen(bool on) {
         } else {
             fatal_if_false(SetWindowPlacement(window(), &wp));
             app_set_window_long(GWL_STYLE,  style | WS_OVERLAPPED);
-            enum { swp = SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | 
+            enum { swp = SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE |
                          SWP_NOZORDER | SWP_NOOWNERZORDER };
             fatal_if_false(SetWindowPos(window(), null, 0, 0, 0, 0, swp));
             enum DWMNCRENDERINGPOLICY ncrp = DWMNCRP_ENABLED;
@@ -4865,7 +4865,7 @@ static int app_win_main(void) {
         thread_t thread = threads.start(app_redraw_thread, null);
         r = app_message_loop();
         fatal_if_false(SetEvent(app_event_quit));
-        threads.join(thread);
+        threads.join(thread, -1);
         app_dispose();
         if (r == 0 && app.exit_code != 0) { r = app.exit_code; }
     } else {

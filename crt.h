@@ -315,8 +315,8 @@ typedef struct thread_s* thread_t;
 
 typedef struct {
     thread_t (*start)(void (*func)(void*), void* p); // never returns null
-    bool (*try_join)(thread_t thread, double timeout); // seconds
-    void (*join)(thread_t thread);
+    void (*detach)(thread_t thread); // cannot join after detach
+    int  (*join)(thread_t thread, double timeout_seconds); // -1 infinity
     void (*name)(const char* name); // names the thread
     void (*realtime)(void); // bumps calling thread priority
     void (*yield)(void);    // SwitchToThread()
@@ -1099,30 +1099,28 @@ static bool is_handle_valid(void* h) {
     return GetHandleInformation(h, &flags);
 }
 
-static bool threads_try_join(thread_t t, double timeout) {
+static int threads_join(thread_t t, double timeout) {
     not_null(t);
     fatal_if_false(is_handle_valid(t));
-    int32_t timeout_ms = timeout <= 0 ? 0 : (int)(timeout * 1000.0 + 0.5);
+    int32_t timeout_ms = timeout < 0 ? INFINITE : (int)(timeout * 1000.0 + 0.5);
     int r = WaitForSingleObject(t, timeout_ms);
-    if (r != 0) {
+    if (r == WAIT_TIMEOUT) {
+        r = ERROR_TIMEOUT; // expected and reported to caller
+    } else if (r == WAIT_ABANDONED) {
+        fatal_if(false, "cannot be WAIT_ABANDONED");
+    } else if (r != 0) {
+        r = GetLastError();
         traceln("failed to join thread %p %s", t, crt.error(r));
     } else {
+        // TODO: possibly should be fatal because it is a bug in caller logic
         r = CloseHandle(t) ? 0 : GetLastError();
         if (r != 0) { traceln("CloseHandle(%p) failed %s", t, crt.error(r)); }
     }
-    return r == 0;
+    return r;
 }
 
-static void threads_join(thread_t t) {
-    // longer timeout for super slow instrumented code
-    #ifdef DEBUG
-    const double timeout = 3.0; // 30 seconds
-    #else
-    const double timeout = 1.0; // 1 second
-    #endif
-    if (!threads.try_join(t, timeout)) {
-        traceln("failed to join thread %p", t);
-    }
+static void threads_detach(thread_t t) {
+    fatal_if_false(CloseHandle(t));
 }
 
 static void threads_name(const char* name) {
@@ -1133,7 +1131,7 @@ static void threads_name(const char* name) {
 
 threads_if threads = {
     .start    = threads_start,
-    .try_join = threads_try_join,
+    .detach   = threads_detach,
     .join     = threads_join,
     .name     = threads_name,
     .realtime = threads_realtime,
